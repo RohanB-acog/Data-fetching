@@ -122,37 +122,75 @@ export abstract class BaseFetcher<T> {
     }
   }
 
-  async fetchApiData(isServer: boolean): Promise<T[]> {
-    // For external API calls (like RapidAPI or MockAPI)
-    const url = this.options.endpoint || '';
+  // async fetchApiData(isServer: boolean): Promise<T[]> {
+  //   // For external API calls (like RapidAPI or MockAPI)
+  //   const url = this.options.endpoint || '';
     
-    try {
-      let headers = {};
+  //   try {
+  //     let headers = {};
       
-      // Only add API keys if they're defined
-      if (process.env.RAPIDAPI_KEY && process.env.RAPIDAPI_HOST) {
-        headers = {
-          'x-rapidapi-key': process.env.RAPIDAPI_KEY,
-          'x-rapidapi-host': process.env.RAPIDAPI_HOST
-        };
-      }
+  //     // Only add API keys if they're defined
+  //     if (process.env.RAPIDAPI_KEY && process.env.RAPIDAPI_HOST) {
+  //       headers = {
+  //         'x-rapidapi-key': process.env.RAPIDAPI_KEY,
+  //         'x-rapidapi-host': process.env.RAPIDAPI_HOST
+  //       };
+  //     }
       
-      const response = await fetch(url, {
-        headers,
-        cache: 'no-store'
-      });
+  //     const response = await fetch(url, {
+  //       headers,
+  //       cache: 'no-store'
+  //     });
       
-      if (!response.ok) {
-        throw new Error(`Failed to fetch API data: ${response.statusText}`);
-      }
+  //     if (!response.ok) {
+  //       throw new Error(`Failed to fetch API data: ${response.statusText}`);
+  //     }
       
-      const data = await response.json();
-      return this.parseData(data);
-    } catch (error) {
-      console.error("Error fetching API data:", error);
-      throw error;
-    }
+  //     const data = await response.json();
+  //     return this.parseData(data);
+  //   } catch (error) {
+  //     console.error("Error fetching API data:", error);
+  //     throw error;
+  //   }
+  // }
+  // This is just the fetchApiData method from the BaseFetcher class
+async fetchApiData(isServer: boolean): Promise<T[]> {
+  // For external API calls (like RapidAPI or MockAPI)
+  const url = this.options.endpoint || '';
+  
+  if (!url || url === '') {
+    console.warn(`No endpoint provided for API data source in component ${this.options.componentId}`);
+    return [];
   }
+  
+  try {
+    let headers: Record<string, string> = {};
+    
+    // Only add API keys if they're defined
+    if (process.env.NEXT_PUBLIC_RAPIDAPI_KEY && process.env.NEXT_PUBLIC_RAPIDAPI_HOST) {
+      headers = {
+        'x-rapidapi-key': process.env.NEXT_PUBLIC_RAPIDAPI_KEY,
+        'x-rapidapi-host': process.env.NEXT_PUBLIC_RAPIDAPI_HOST
+      };
+    }
+    
+    const response = await fetch(url, {
+      headers,
+      cache: 'no-store'
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to fetch API data: ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    return this.parseData(data);
+  } catch (error) {
+    console.error(`Error fetching API data from ${url}:`, error);
+    // Return empty array instead of throwing to prevent component crashes
+    return [];
+  }
+}
 
   async fetchData(isServer: boolean = false): Promise<T[]> {
     const dataSource = this.options.dataSource || 'json';
