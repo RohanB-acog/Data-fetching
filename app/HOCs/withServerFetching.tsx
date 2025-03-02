@@ -1,4 +1,5 @@
 // hoc/withServerFetching.tsx
+'use client';
 
 import React from 'react';
 import { BaseFetcher } from '../fetchers/BaseFetcher';
@@ -14,25 +15,30 @@ export function withServerFetching<T, P extends { data?: T[] }>(
     const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-      const registry = FetcherRegistry.getInstance();
-      const fetcher = registry.getFetcher(componentId);
+      const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          const registry = FetcherRegistry.getInstance();
+          const fetcher = registry.getFetcher(componentId);
 
-      if (!fetcher) {
-        setError(`No fetcher registered for component: ${componentId}`);
-        setLoading(false);
-        return;
-      }
+          if (!fetcher) {
+            throw new Error(`No fetcher registered for component: ${componentId}`);
+          }
 
-      // Fetch data from the server
-      fetcher.fetchData(true)
-        .then(result => {
+          // Fetch data from the server
+          const result = await fetcher.fetchData(true);
           setData(result);
+        } catch (err: any) {
+          console.error("Server fetching error:", err);
+          setError(err.message || 'Unknown error occurred');
+        } finally {
           setLoading(false);
-        })
-        .catch(err => {
-          setError(err.message);
-          setLoading(false);
-        });
+        }
+      };
+
+      fetchData();
     }, [componentId]);
 
     if (loading) return <div>Loading data...</div>;

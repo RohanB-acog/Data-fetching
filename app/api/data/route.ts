@@ -28,7 +28,7 @@ async function fetchDataFromFile(componentId: string, dataSource: DataSourceType
     return [];
   } catch (error) {
     console.error(`Error reading ${extension} file for ${componentId}:`, error);
-    return [];
+    throw new Error(`Failed to read data file for ${componentId} with format ${extension}`);
   }
 }
 
@@ -58,8 +58,8 @@ export async function GET(request: NextRequest) {
     }
     
     return NextResponse.json({ error: 'Unsupported data source' }, { status: 400 });
-  } catch (error) {
+  } catch (error: any) {
     console.error('API route error:', error);
-    return NextResponse.json({ error: 'Failed to fetch data' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to fetch data' }, { status: 500 });
   }
 }

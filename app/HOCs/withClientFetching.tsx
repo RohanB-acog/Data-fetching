@@ -17,25 +17,30 @@ export function withClientFetching<T, P extends { data?: T[] }>(
     const [error, setError] = React.useState<string | null>(null);
 
     React.useEffect(() => {
-      const registry = FetcherRegistry.getInstance();
-      const fetcher = registry.getFetcher(componentId);
+      const fetchData = async () => {
+        setLoading(true);
+        setError(null);
+        
+        try {
+          const registry = FetcherRegistry.getInstance();
+          const fetcher = registry.getFetcher(componentId);
 
-      if (!fetcher) {
-        setError(`No fetcher registered for component: ${componentId}`);
-        setLoading(false);
-        return;
-      }
+          if (!fetcher) {
+            throw new Error(`No fetcher registered for component: ${componentId}`);
+          }
 
-      // Fetch data from the client
-      fetcher.fetchData(false)
-        .then(result => {
+          // Fetch data from the client
+          const result = await fetcher.fetchData(false);
           setData(result);
+        } catch (err: any) {
+          console.error("Client fetching error:", err);
+          setError(err.message || 'Unknown error occurred');
+        } finally {
           setLoading(false);
-        })
-        .catch(err => {
-          setError(err.message);
-          setLoading(false);
-        });
+        }
+      };
+
+      fetchData();
     }, [componentId]);
 
     if (loading) return <div>Loading data...</div>;

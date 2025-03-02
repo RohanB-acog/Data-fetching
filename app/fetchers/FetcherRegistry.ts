@@ -24,8 +24,14 @@ export class FetcherRegistry {
     return this.fetchers.get(componentId);
   }
 
-  // This method will be called client-side and simply helps construct the API URL
+  // Updated method to handle both client and server side URL construction
   public getDataUrl(componentId: string, dataSource: DataSourceType = 'json'): string {
+    // For server-side fetching, we should return the full URL
+    if (typeof window === 'undefined') {
+      const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:3000';
+      return `${baseUrl}/api/data?component=${componentId}&dataSource=${dataSource}`;
+    }
+    // For client-side, relative URL is fine
     return `/api/data?component=${componentId}&dataSource=${dataSource}`;
   }
 }
